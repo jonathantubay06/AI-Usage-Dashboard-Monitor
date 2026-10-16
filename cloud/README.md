@@ -1,6 +1,6 @@
 # Cloud mirror (optional)
 
-Your own read-only copy of the dashboard on a free Netlify site, so you can check usage from a phone anywhere. Your computer pushes a trimmed snapshot within about 10 seconds of any change; the site stores only the latest one (Netlify Blobs) and shows it after you enter a view token.
+Your own read-only copy of the dashboard on a free Netlify site, so you can check usage from a phone anywhere. Your computer pushes a trimmed snapshot within about 5 seconds of any change; the site stores only the latest one (Netlify Blobs) and shows it after you enter a view token.
 
 What is sent: totals per app, model and day, the last 30 days of sessions (titles and project folders replaced by "Session ab12cd" unless you tick "Include session titles"), live server status, plan limits and exchange rates. Your logs, source paths, API keys and webhooks never leave your computer.
 
@@ -36,5 +36,9 @@ You need a free Netlify account and Node.js.
 4. On your computer, open the monitor, go to Settings, Cloud mirror: enter the site address and the push token, tick "Send updates" and press Save. "Last push" should say "Pushed".
 
 5. On your phone, open the site address, enter the view token, and use "Add to Home Screen".
+
+## Budgets from your phone
+
+Settings on the cloud site lets you add, edit, switch off or remove budget alerts. Each change shows straight away (marked "syncing"), your computer applies it within about 5 seconds and pushes the new totals back. Webhook URLs can only be set on the computer, so they never reach the cloud site. Usage itself is pushed within about 5 seconds of any new call, and the phone refreshes every 5 seconds while the page is open.
 
 Keep both tokens private. To stop the mirror, untick "Send updates"; to remove everything, delete the site in Netlify.

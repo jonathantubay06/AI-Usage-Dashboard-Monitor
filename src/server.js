@@ -108,8 +108,26 @@ function data() {
   snap.alerts = config.alerts.filter((a) => a.enabled !== false).map((a) => ({ ...evaluate(a, snap.daily), browser: a.browser }));
   return snap;
 }
-const cloud = createCloudPusher({ getConfig: () => config.cloud, getData: data, getLive: live, getRates });
-setInterval(() => cloud.push(), 10000); // pushes only when usage changed, plus a 5-minute heartbeat
+// Budget changes made on the phone; webhooks can only be set here on the PC.
+async function applyCloudOps(ops, seq) {
+  for (const o of ops) {
+    const { webhook, webhookFormat, ...f } = o.fields || {};
+    const i = config.alerts.findIndex((a) => a.id === o.id);
+    if (o.op === 'add' && i < 0) config.alerts.push(alertFrom({ name: 'Budget', period: 'day', metric: 'cost', limit: 10, warnAt: 80, browser: false, app: '', model: '', ...f }, { id: o.id, enabled: true }));
+    if (o.op === 'update' && i >= 0) config.alerts[i] = alertFrom(f, config.alerts[i]);
+    if (o.op === 'delete' && i >= 0) config.alerts.splice(i, 1);
+  }
+  config.cloud.opsSeq = seq;
+  await saveConfig();
+  if (ops.length) console.log(`[cloud] applied ${ops.length} budget change(s) from the phone`);
+}
+const cloud = createCloudPusher({
+  getConfig: () => config.cloud, getData: data, getLive: live, getRates,
+  getAlerts: () => config.alerts, getMeta: () => ({ periods: PERIODS, webhookFormats: WEBHOOK_FORMATS }), applyOps: applyCloudOps,
+});
+// Usage is pushed within about 5 s of a change (plus a 5-minute heartbeat); phone edits are pulled every 5 s.
+setInterval(() => cloud.push(), 5000);
+setInterval(() => cloud.pull(), 5000);
 const publicCloud = () => ({ ...config.cloud, pushToken: config.cloud.pushToken ? '••••••' : '', last: cloud.status() });
 const runAlerts = createAlertRunner(DATA);
 setInterval(() => runAlerts(config.alerts, data().daily).catch((e) => console.warn(`[alerts] ${e.message}`)), 30000);

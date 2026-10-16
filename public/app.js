@@ -278,11 +278,16 @@ function liveView() {
 function settingsView() {
   const c = state.config;
   if (!c) return '<p class="empty">Loading…</p>';
-  if (c.cloud === true) return `<section class="card"><h2>Cloud copy</h2>
-    <p class="note">This is a read-only copy of your monitor, pushed from your computer${c.pushedAt ? `, last updated ${ago(c.pushedAt)}` : ''}. Sources, budgets and currency rates are managed in Settings on that computer. Session titles and project folders are hidden unless you allowed them there.</p></section>`;
-  const typeOf = (t) => c.types.find((x) => x.type === t);
   const apps = [...new Set((state.data?.daily || []).map((d) => d.app))].sort();
   const models = [...new Set((state.data?.daily || []).map((d) => d.model))].sort();
+  if (c.cloud === true) return `<section class="card"><h2>Budget alerts <small>synced with your computer</small></h2>
+    <p class="note">Add, change or switch off budgets here. Your computer picks up each change within a few seconds and sends back the updated totals. Webhooks (phone push, Slack, Discord) are set in Settings on the computer.</p>
+    ${budgetRules(c, apps, models)}
+    <p class="note">Browser notifications: ${typeof Notification === 'undefined' ? 'not supported in this browser.' : Notification.permission === 'granted' ? 'allowed.' : `<button class="btn" data-notify>Allow notifications</button>`}</p>
+  </section>
+  <section class="card"><h2>Cloud copy</h2>
+    <p class="note">A copy of your monitor, pushed from your computer${c.pushedAt ? `, last updated ${ago(c.pushedAt)}` : ''}. Sources and currency rates are managed in Settings on that computer. Session titles and project folders are hidden unless you allowed them there.</p></section>`;
+  const typeOf = (t) => c.types.find((x) => x.type === t);
   return `${DEMO ? '<section class="alert warn" role="note"><strong>Demo:</strong> this page shows invented data. Changes here are not saved.</section>' : ''}
   <section class="card"><h2>Getting started</h2>
     <ol class="steps">
@@ -315,17 +320,7 @@ function settingsView() {
 
   <section class="card"><h2>Budget alerts <small>warn before you overspend</small></h2>
     <p class="note">Each rule watches a total for today, this week (from Monday) or this month. You get a warning at the percentage you choose and again when the budget is passed. Leave App and Model on "Any" to watch everything.</p>
-    ${(c.alerts || []).map((a) => `<div class="src" data-alert="${a.id}">
-      <div><strong>${esc(a.name)}</strong> <span class="chip">${esc(scopeOf(a))}</span>
-        <div class="note">${amount(a, a.limit)} ${PERIOD_LABEL[a.period]} · warn at ${a.warnAt}%${a.browser ? ' · browser notification' : ''}${a.webhook ? ` · ${esc(c.webhookFormats[a.webhookFormat] || 'webhook')}` : ''}</div>
-        <div class="note test-result" role="status"></div></div>
-      <div class="actions"><button class="switch" role="switch" aria-checked="${a.enabled !== false}" aria-label="${esc(a.name)} enabled" data-alert-act="toggle"></button>
-        <button class="btn" data-alert-act="test">Send test</button><button class="btn" data-alert-act="edit">Edit</button><button class="btn danger" data-alert-act="remove">Remove</button></div>
-      <form class="form alert-form" hidden>${alertFields(a, apps, models)}<button class="btn primary">Save changes</button></form>
-    </div>`).join('')}
-    <details class="add-alert"${(c.alerts || []).length ? '' : ' open'}><summary class="btn">Add a budget</summary>
-      <form class="form alert-form" id="alert-add">${alertFields({ name: '', period: 'day', metric: 'cost', limit: '', warnAt: 80, browser: true, webhookFormat: 'ntfy' }, apps, models)}<button class="btn primary">Add budget</button></form>
-    </details>
+    ${budgetRules(c, apps, models)}
     <p class="note">Browser notifications: ${typeof Notification === 'undefined' ? 'not supported in this browser.' : Notification.permission === 'granted' ? 'allowed.' : `<button class="btn" data-notify>Allow notifications</button>`}</p>
     <details class="help"><summary>How do phone push alerts work?</summary>
       <ol class="steps">
@@ -354,9 +349,22 @@ function settingsView() {
     <p class="note">Costs are API-equivalent estimates from the public LiteLLM price list, refreshed daily (the same source ccusage uses). On a subscription plan they show what the usage would cost on the API, not your bill. opencode reports its own cost. Local models count as $0. Rows marked "—" are models with no published price.</p>
   </section>`;
 }
+function budgetRules(c, apps, models) {
+  return `${(c.alerts || []).map((a) => `<div class="src" data-alert="${a.id}">
+      <div><strong>${esc(a.name)}</strong> <span class="chip">${esc(scopeOf(a))}</span>
+        <div class="note">${amount(a, a.limit)} ${PERIOD_LABEL[a.period]} · warn at ${a.warnAt}%${a.browser ? ' · browser notification' : ''}${a.webhook ? ` · ${esc(c.webhookFormats[a.webhookFormat] || 'webhook')}` : a.hasWebhook ? ' · webhook (set on the computer)' : ''}${a.pending ? ' · <span class="chip">syncing</span>' : ''}</div>
+        <div class="note test-result" role="status"></div></div>
+      <div class="actions"><button class="switch" role="switch" aria-checked="${a.enabled !== false}" aria-label="${esc(a.name)} enabled" data-alert-act="toggle"></button>
+        ${c.cloud === true ? '' : '<button class="btn" data-alert-act="test">Send test</button>'}<button class="btn" data-alert-act="edit">Edit</button><button class="btn danger" data-alert-act="remove">Remove</button></div>
+      <form class="form alert-form" hidden>${alertFields(a, apps, models)}<button class="btn primary">Save changes</button></form>
+    </div>`).join('')}
+    <details class="add-alert"${(c.alerts || []).length ? '' : ' open'}><summary class="btn">Add a budget</summary>
+      <form class="form alert-form" id="alert-add">${alertFields({ name: '', period: 'day', metric: 'cost', limit: '', warnAt: 80, browser: true, webhookFormat: 'ntfy' }, apps, models)}<button class="btn primary">Add budget</button></form>
+    </details>`;
+}
 function cloudCard(cl) {
   return `<section class="card"><h2>Cloud mirror <small>check usage from anywhere</small></h2>
-    <p class="note">Sends a copy of this dashboard to your own free Netlify site within about 10 seconds of any change, so your phone can open it without Tailscale or being on the same Wi-Fi. The cloud copy is read-only and protected by its own view token. Set up the site once with the steps in <code>cloud/README.md</code>.</p>
+    <p class="note">Sends a copy of this dashboard to your own free Netlify site within about 5 seconds of any change, so your phone can open it without Tailscale or being on the same Wi-Fi. Budgets can be changed from the phone too; everything else stays read-only there. The cloud copy is protected by its own view token. Set up the site once with the steps in <code>cloud/README.md</code>.</p>
     <form class="form" id="cloud-form">
       <label>Your cloud site address<input type="text" name="url" value="${esc(cl.url)}" placeholder="https://my-ai-monitor.netlify.app" autocomplete="off"></label>
       <label>Push token (ATM_PUSH_TOKEN on the site)<input type="password" name="pushToken" value="${esc(cl.pushToken)}" autocomplete="off"></label>
@@ -387,13 +395,13 @@ function alertFields(a, apps, models) {
   return `<label>Name<input type="text" name="name" value="${esc(a.name)}" placeholder="e.g. Daily Claude budget" required></label>
     <label>App<select name="app">${opt(apps, a.app)}</select></label>
     <label>Model<select name="model">${opt(models, a.model)}</select></label>
-    <label>Period${sel('period', c.periods, a.period)}</label>
+    <label>Period${sel('period', c.periods || { day: 'Today', week: 'This week (from Monday)', month: 'This month' }, a.period)}</label>
     <label>Measure${sel('metric', { cost: 'Cost (USD)', tokens: 'Tokens' }, a.metric)}</label>
     <label>Budget (${cur()} for cost, count for tokens)<input type="text" inputmode="decimal" name="limit" value="${a.limit === '' || a.metric === 'tokens' ? esc(a.limit) : +(a.limit * fx.rates[cur()]).toFixed(2)}" placeholder="e.g. 50 or 50000000" required></label>
     <label>Warn at (%)<input type="text" inputmode="numeric" name="warnAt" value="${esc(a.warnAt ?? 80)}"></label>
     <label class="check"><input type="checkbox" name="browser" ${a.browser ? 'checked' : ''}> Browser notification</label>
-    <label>Webhook URL (optional)<input type="password" name="webhook" value="${esc(a.webhook || '')}" placeholder="https://ntfy.sh/your-topic" autocomplete="off"></label>
-    <label>Webhook format${sel('webhookFormat', c.webhookFormats, a.webhookFormat || 'ntfy')}</label>`;
+    ${c.cloud === true ? '' : `<label>Webhook URL (optional)<input type="password" name="webhook" value="${esc(a.webhook || '')}" placeholder="https://ntfy.sh/your-topic" autocomplete="off"></label>
+    <label>Webhook format${sel('webhookFormat', c.webhookFormats, a.webhookFormat || 'ntfy')}</label>`}`;
 }
 
 // ---------- render ----------
@@ -547,12 +555,15 @@ function connect() {
     const tick = async () => {
       const d = await api('/api/data');
       if (d && !d.error) onData(d);
+      // Keep the budget list in sync too, unless the viewer is typing in a form.
+      const editing = document.activeElement?.closest('form') || $('.src form.alert-form:not([hidden])') || $('#alert-add input[name=name]')?.value;
+      if (state.tab === 'settings' && !editing) { await loadConfig(); render(); }
       $('#pulse').classList.toggle('on', !!d?.pushedAt && Date.now() - d.pushedAt < 3 * 60e3);
       state.live = (await api('/api/live')) || state.live; if (state.tab === 'live') render();
     };
-    // Poll every 15 s while the page is on screen; pause in the background (saves phone battery and function calls).
+    // Poll every 5 s while the page is on screen; pause in the background (saves phone battery and function calls).
     tick();
-    setInterval(() => { if (document.visibilityState === 'visible') tick(); }, 15000);
+    setInterval(() => { if (document.visibilityState === 'visible') tick(); }, 5000);
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') tick(); });
     return;
   }
