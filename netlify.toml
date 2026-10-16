@@ -1,0 +1,7 @@
+# Public demo: the dashboard on invented data. It never reads real logs.
+[build]
+  command = "node scripts/build-site.mjs"
+  publish = "dist-demo"
+
+[build.environment]
+  NODE_VERSION = "24"

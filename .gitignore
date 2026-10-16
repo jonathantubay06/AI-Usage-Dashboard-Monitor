@@ -1,0 +1,6 @@
+data/
+node_modules/
+history/
+dist-demo/
+dist-cloud/
+.netlify/

@@ -1,0 +1,21 @@
+{
+  "name": "ai-token-monitor",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "description": "Local, real-time token and cost tracker for Claude Code, Codex, opencode and local LLMs.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "lan": "node src/server.js --lan",
+    "test": "node --test \"test/*.test.js\"",
+    "demo": "node scripts/build-site.mjs",
+    "cloud": "node scripts/build-site.mjs --cloud"
+  },
+  "dependencies": {
+    "@netlify/blobs": "11.1.4"
+  }
+}

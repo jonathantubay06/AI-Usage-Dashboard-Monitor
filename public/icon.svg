@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="cyan" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8af7ff"/>
+      <stop offset="1" stop-color="#10cfe5"/>
+    </linearGradient>
+    <linearGradient id="amber" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd979"/>
+      <stop offset="1" stop-color="#ffab35"/>
+    </linearGradient>
+    <symbol id="brand-mark" viewBox="0 0 64 64">
+      <rect width="64" height="64" rx="14" fill="#050c1d"/>
+      <g fill="none" stroke="#25dced" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.8">
+        <path d="M14 20 20 29M32 13v14M50 20l-6 9"/>
+      </g>
+      <g fill="#102440" stroke="url(#cyan)" stroke-width="2">
+        <rect x="7.5" y="6.5" width="13" height="13" rx="3.5"/>
+        <circle cx="32" cy="8.5" r="6.5"/>
+        <path d="m50 6.5 7 4v8l-7 4-7-4v-8z"/>
+      </g>
+      <circle cx="32" cy="43" r="17.5" fill="#0b1930" stroke="#304d70" stroke-width="4"/>
+      <path d="M19 44a13.2 13.2 0 0 1 25.8-3.8" fill="none" stroke="url(#cyan)" stroke-linecap="round" stroke-width="3.6"/>
+      <path d="M42.5 36.2a13.2 13.2 0 0 1 1 4" fill="none" stroke="url(#amber)" stroke-linecap="round" stroke-width="3.6"/>
+      <rect x="25.5" y="41" width="5.5" height="11" rx="2" fill="url(#cyan)"/>
+      <rect x="33" y="36" width="5.5" height="16" rx="2" fill="url(#cyan)"/>
+    </symbol>
+  </defs>
+  <use href="#brand-mark"/>
+</svg>
