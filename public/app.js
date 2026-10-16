@@ -69,14 +69,16 @@ const inRange = (from = rangeStart()) => state.data.daily.filter((d) => d.day >=
 
 // ---------- charts ----------
 function stackedBars(days, seriesNames, valueOf) {
-  const W = 800, H = 220, pad = { l: 46, r: 8, t: 10, b: 26 };
   const max = Math.max(1e-9, ...days.map((d) => seriesNames.reduce((a, s) => a + valueOf(d, s), 0)));
+  const ticks = [0, 1, 2, 3].map((i) => fmtMetric((max * i) / 3));
+  // Room for the widest axis label, so long currency codes ("SGD 12.50") are not clipped.
+  const W = 800, H = 220, pad = { l: Math.max(46, 12 + Math.max(...ticks.map((t) => t.length)) * 7), r: 8, t: 10, b: 26 };
   const bw = (W - pad.l - pad.r) / Math.max(1, days.length);
   const y = (v) => H - pad.b - (v / max) * (H - pad.t - pad.b);
   let out = '';
   for (let i = 0; i <= 3; i++) {
     const v = (max * i) / 3, yy = y(v);
-    out += `<line class="axis" x1="${pad.l}" x2="${W - pad.r}" y1="${yy}" y2="${yy}" stroke-dasharray="${i ? '2 4' : ''}"/><text x="${pad.l - 6}" y="${yy + 4}" text-anchor="end">${fmtMetric(v)}</text>`;
+    out += `<line class="axis" x1="${pad.l}" x2="${W - pad.r}" y1="${yy}" y2="${yy}" stroke-dasharray="${i ? '2 4' : ''}"/><text x="${pad.l - 6}" y="${yy + 4}" text-anchor="end">${ticks[i]}</text>`;
   }
   const every = Math.ceil(days.length / 10);
   days.forEach((d, i) => {
@@ -363,6 +365,7 @@ function cloudCard(cl) {
       <div class="actions full"><button class="btn primary">Save</button> <button class="btn" type="button" data-cloud-test>Push now</button></div>
     </form>
     <p class="note" role="status" id="cloud-status">Last push: ${esc(cl.last?.note || 'never')}</p>
+    ${cl.viewToken ? `<p>Phone view token: <span class="token" id="view-token">${esc(cl.viewToken)}</span> <button class="btn" data-copy="view-token">Copy</button></p>` : ''}
     <p class="note">Titles are off by default because they often name clients or projects. Only totals per app, model and day, anonymous session rows, live server status and plan limits are sent.</p>
   </section>`;
 }
@@ -417,7 +420,7 @@ document.addEventListener('click', async (e) => {
   if (t.dataset.range) { state.range = t.dataset.range; saveUi(); render(); return; }
   if ('metric' in t.dataset) { state.metric = state.metric === 'cost' ? 'tokens' : 'cost'; saveUi(); render(); return; }
   if (t.dataset.sort) { const k = t.dataset.sort; state.sort = { key: k, dir: state.sort.key === k ? -state.sort.dir : -1 }; render(); return; }
-  if ('copy' in t.dataset) { navigator.clipboard?.writeText($('#token').textContent); t.textContent = 'Copied'; return; }
+  if ('copy' in t.dataset) { navigator.clipboard?.writeText($(`#${t.dataset.copy || 'token'}`).textContent); t.textContent = 'Copied'; return; }
   if (t.id === 'cur-btn') { openCurrency(); return; }
   if (t.dataset.cur) { state.currency = t.dataset.cur; saveUi(); $('#cur-dlg').close(); curLabel(); render(); return; }
   if ('curClose' in t.dataset) { $('#cur-dlg').close(); return; }
@@ -528,6 +531,7 @@ async function demoApi(url, method, body) {
 function login() {
   const d = $('#login');
   if (d.open) return;
+  if (CLOUD) d.querySelector('p').textContent = 'Use the phone view token from Settings, Cloud mirror, on the computer running the monitor.';
   d.showModal();
   $('#login-form').onsubmit = async (e) => {
     e.preventDefault();
