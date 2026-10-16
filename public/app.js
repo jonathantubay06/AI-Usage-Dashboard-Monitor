@@ -148,17 +148,18 @@ function overview() {
 }
 // ---------- budget alerts ----------
 const PERIOD_LABEL = { day: 'today', week: 'this week', month: 'this month' };
+const periodText = (a) => (a.perSession ? 'in a single session' : PERIOD_LABEL[a.period]);
 const amount = (a, v) => (a.metric === 'tokens' ? tok(v) : usd(v));
 const scopeOf = (a) => [a.app, a.model && shortModel(a.model)].filter(Boolean).join(' · ') || 'All tools';
 function alertBanners() {
   const hot = (state.data.alerts || []).filter((a) => a.level !== 'ok');
   return hot.length ? `<section class="alerts" role="status">${hot.map((a) => `<div class="alert ${a.level}">
-    <strong>${a.level === 'over' ? 'Over budget' : 'Budget warning'}:</strong> ${esc(a.name)} is at ${amount(a, a.used)} of ${amount(a, a.limit)} (${Math.round(a.pct)}%) ${PERIOD_LABEL[a.period]}.</div>`).join('')}</section>` : '';
+    <strong>${a.level === 'over' ? 'Over budget' : 'Budget warning'}:</strong> ${esc(a.name)} is at ${amount(a, a.used)} of ${amount(a, a.limit)} (${Math.round(a.pct)}%) ${periodText(a)}${a.top ? `: ${esc(a.top.title || 'a session')}${a.count > 1 ? ` and ${a.count - 1} more` : ''}` : ''}.</div>`).join('')}</section>` : '';
 }
 function budgetsHtml() {
   const list = state.data.alerts || [];
   if (!list.length) return `<p class="note">No budgets yet. <button class="btn" data-goto="settings" style="padding:2px 10px">Add one in Settings</button></p>`;
-  return list.map((a) => `<div style="margin-bottom:var(--space-sm)"><div class="barrow"><span class="name">${esc(a.name)} <span class="muted">· ${esc(scopeOf(a))} · ${PERIOD_LABEL[a.period]}</span></span>
+  return list.map((a) => `<div style="margin-bottom:var(--space-sm)"><div class="barrow"><span class="name">${esc(a.name)} <span class="muted">· ${esc(scopeOf(a))} · ${periodText(a)}</span></span>
     <span class="num">${amount(a, a.used)} / ${amount(a, a.limit)}</span></div>
     <div class="meter ${a.level !== 'ok' ? 'hot' : ''}"><div style="transform:scaleX(${Math.min(1, a.pct / 100)})"></div></div></div>`).join('');
 }
@@ -167,9 +168,9 @@ function notifyAlerts() {
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
   for (const a of state.data.alerts || []) {
     if (a.level === 'ok' || !a.browser) continue;
-    const key = `atm-n|${a.id}|${a.from}|${a.level}`;
+    const key = `atm-n|${a.id}|${a.top?.key || a.from}|${a.level}`;
     try { if (localStorage.getItem(key)) continue; localStorage.setItem(key, '1'); } catch { /* ignore */ }
-    new Notification(a.level === 'over' ? 'Over budget' : 'Budget warning', { body: `${a.name}: ${amount(a, a.used)} of ${amount(a, a.limit)} ${PERIOD_LABEL[a.period]}`, icon: '/icon.svg' });
+    new Notification(a.level === 'over' ? 'Over budget' : 'Budget warning', { body: `${a.name}: ${amount(a, a.used)} of ${amount(a, a.limit)} ${periodText(a)}${a.top ? ` (${a.top.title || 'a session'})` : ''}`, icon: '/icon.svg' });
   }
 }
 
@@ -352,7 +353,7 @@ function settingsView() {
 function budgetRules(c, apps, models) {
   return `${(c.alerts || []).map((a) => `<div class="src" data-alert="${a.id}">
       <div><strong>${esc(a.name)}</strong> <span class="chip">${esc(scopeOf(a))}</span>
-        <div class="note">${amount(a, a.limit)} ${PERIOD_LABEL[a.period]} · warn at ${a.warnAt}%${a.browser ? ' · browser notification' : ''}${a.webhook ? ` · ${esc(c.webhookFormats[a.webhookFormat] || 'webhook')}` : a.hasWebhook ? ' · webhook (set on the computer)' : ''}${a.pending ? ' · <span class="chip">syncing</span>' : ''}</div>
+        <div class="note">${amount(a, a.limit)} ${periodText(a)} · warn at ${a.warnAt}%${a.browser ? ' · browser notification' : ''}${a.webhook ? ` · ${esc(c.webhookFormats[a.webhookFormat] || 'webhook')}` : a.hasWebhook ? ' · webhook (set on the computer)' : ''}${a.pending ? ' · <span class="chip">syncing</span>' : ''}</div>
         <div class="note test-result" role="status"></div></div>
       <div class="actions"><button class="switch" role="switch" aria-checked="${a.enabled !== false}" aria-label="${esc(a.name)} enabled" data-alert-act="toggle"></button>
         ${c.cloud === true ? '' : '<button class="btn" data-alert-act="test">Send test</button>'}<button class="btn" data-alert-act="edit">Edit</button><button class="btn danger" data-alert-act="remove">Remove</button></div>
@@ -395,7 +396,8 @@ function alertFields(a, apps, models) {
   return `<label>Name<input type="text" name="name" value="${esc(a.name)}" placeholder="e.g. Daily Claude budget" required></label>
     <label>App<select name="app">${opt(apps, a.app)}</select></label>
     <label>Model<select name="model">${opt(models, a.model)}</select></label>
-    <label>Period${sel('period', c.periods || { day: 'Today', week: 'This week (from Monday)', month: 'This month' }, a.period)}</label>
+    <label class="check full"><input type="checkbox" name="perSession" ${a.perSession ? 'checked' : ''}> Watch each chat/session separately (warns when one single session gets expensive, so a runaway chat is caught early)</label>
+    <label>Period (ignored when watching sessions)${sel('period', c.periods || { day: 'Today', week: 'This week (from Monday)', month: 'This month' }, a.period)}</label>
     <label>Measure${sel('metric', { cost: 'Cost (USD)', tokens: 'Tokens' }, a.metric)}</label>
     <label>Budget (${cur()} for cost, count for tokens)<input type="text" inputmode="decimal" name="limit" value="${a.limit === '' || a.metric === 'tokens' ? esc(a.limit) : +(a.limit * fx.rates[cur()]).toFixed(2)}" placeholder="e.g. 50 or 50000000" required></label>
     <label>Warn at (%)<input type="text" inputmode="numeric" name="warnAt" value="${esc(a.warnAt ?? 80)}"></label>
@@ -485,6 +487,7 @@ document.addEventListener('submit', async (e) => {
   else if (f.classList.contains('edit-form')) r = await api(`/api/sources/${f.closest('.src').dataset.id}`, 'PUT', body);
   else if (f.classList.contains('alert-form')) {
     body.browser = f.elements.browser.checked; // unchecked boxes are missing from FormData
+    body.perSession = f.elements.perSession.checked;
     if (body.metric === 'cost') body.limit = Number(body.limit) / fx.rates[cur()]; // budgets are stored in USD
     r = f.id === 'alert-add' ? await api('/api/alerts', 'POST', body) : await api(`/api/alerts/${f.closest('.src').dataset.alert}`, 'PUT', body);
   }
@@ -522,7 +525,7 @@ async function demoApi(url, method, body) {
   const list = kind === 'alerts' ? demo.alerts : demo.sources;
   if (url === '/api/data') {
     const snap = demo.sim.snapshot();
-    snap.alerts = demo.alerts.filter((a) => a.enabled !== false).map((a) => ({ ...demo.evaluate(a, snap.daily), browser: a.browser }));
+    snap.alerts = demo.alerts.filter((a) => a.enabled !== false).map((a) => ({ ...demo.evaluate(a, snap.daily, snap.sessions), browser: a.browser }));
     return snap;
   }
   if (url === '/api/live') return demo.sim.live();

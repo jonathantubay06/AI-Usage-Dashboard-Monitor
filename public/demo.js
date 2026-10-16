@@ -94,7 +94,15 @@ export function createDemo() {
 }
 
 // Same rule check as src/alerts.js, run in the browser because the demo has no server.
-export function evaluate(rule, daily) {
+export function evaluate(rule, daily, sessions = []) {
+  if (rule.perSession) {
+    const val = (s) => (rule.metric === 'tokens' ? s.in + s.out + s.cacheRead + s.cacheWrite : s.cost);
+    const hot = sessions.filter((s) => s.last > Date.now() - 864e5 && (!rule.app || s.app === rule.app)).map((s) => ({ s, used: val(s) }))
+      .map((x) => ({ ...x, pct: rule.limit > 0 ? (x.used / rule.limit) * 100 : 0 })).filter((x) => x.pct >= (rule.warnAt || 80)).sort((a, b) => b.used - a.used);
+    const top = hot[0];
+    return { id: rule.id, name: rule.name, app: rule.app, perSession: true, used: top?.used || 0, limit: rule.limit, pct: top?.pct || 0, level: !top ? 'ok' : top.pct >= 100 ? 'over' : 'warn',
+      period: rule.period, metric: rule.metric, from: 'all', top: top && { key: top.s.key, id: top.s.id, app: top.s.app, title: top.s.title }, count: hot.length };
+  }
   const d = new Date(); d.setHours(0, 0, 0, 0);
   if (rule.period === 'week') d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
   if (rule.period === 'month') d.setDate(1);
@@ -119,5 +127,6 @@ export const demoSources = [
 ];
 export const demoAlerts = [
   { id: 'a1', name: 'Daily Claude budget', enabled: true, app: 'Claude Code', model: '', period: 'day', metric: 'cost', limit: 3, warnAt: 80, browser: true, webhook: '', webhookFormat: 'ntfy' },
+  { id: 'a3', name: 'Any single chat over $2', enabled: true, app: '', model: '', period: 'day', metric: 'cost', limit: 2, warnAt: 80, perSession: true, browser: false, webhook: '', webhookFormat: 'ntfy' },
   { id: 'a2', name: 'Monthly total', enabled: true, app: '', model: '', period: 'month', metric: 'cost', limit: 1500, warnAt: 75, browser: false, webhook: '', webhookFormat: 'ntfy' },
 ];

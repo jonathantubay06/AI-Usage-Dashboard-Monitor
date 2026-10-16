@@ -22,7 +22,7 @@ function cleanFields(b = {}) {
   if (['cost', 'tokens'].includes(b.metric)) f.metric = b.metric;
   if (b.limit != null && Number.isFinite(Number(b.limit))) f.limit = Math.max(0, Number(b.limit));
   if (b.warnAt != null && Number.isFinite(Number(b.warnAt))) f.warnAt = Math.min(100, Math.max(1, Number(b.warnAt)));
-  for (const k of ['browser', 'enabled']) if (typeof b[k] === 'boolean') f[k] = b[k];
+  for (const k of ['browser', 'enabled', 'perSession']) if (typeof b[k] === 'boolean') f[k] = b[k];
   return f;
 }
 

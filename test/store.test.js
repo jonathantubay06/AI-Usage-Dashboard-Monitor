@@ -40,3 +40,26 @@ test('tailer reads only appended complete lines', async () => {
   await t.read(f);
   assert.deepEqual(lines, ['{"a":1}', '{"b":2}', '{"c":3}']);
 });
+
+test('per-session budget flags the expensive chat and keeps titles out of webhook text', async () => {
+  const { evaluate, message, sessionsOver } = await import('../src/alerts.js');
+  const sessions = [
+    { key: 'A:s1', id: 'aaaaaaaa11', app: 'A', title: 'Client Project X', last: Date.now(), cost: 120, in: 0, out: 0, cacheRead: 0, cacheWrite: 0 },
+    { key: 'A:s2', id: 'bbbbbbbb22', app: 'A', title: 'Small', last: Date.now(), cost: 10, in: 0, out: 0, cacheRead: 0, cacheWrite: 0 },
+  ];
+  const rule = { id: 'r', name: 'Chat cap', perSession: true, metric: 'cost', limit: 100, warnAt: 80, period: 'day' };
+  const st = evaluate(rule, [], sessions);
+  assert.equal(st.level, 'over');
+  assert.equal(st.count, 1);
+  assert.equal(st.top.title, 'Client Project X');
+  assert.equal(sessionsOver(rule, sessions).length, 1);
+  const text = message(rule, { ...sessionsOver(rule, sessions)[0] });
+  assert.ok(!text.includes('Client Project X'), 'title must not reach a webhook');
+  assert.match(text, /session aaaaaa/);
+});
+
+test('per-session budget ignores chats idle for more than a day', async () => {
+  const { evaluate } = await import('../src/alerts.js');
+  const old = [{ key: 'A:s1', id: 'cccccccc33', app: 'A', title: 'Old', last: Date.now() - 3 * 864e5, cost: 500, in: 0, out: 0, cacheRead: 0, cacheWrite: 0 }];
+  assert.equal(evaluate({ id: 'r', perSession: true, metric: 'cost', limit: 100, warnAt: 80, period: 'day' }, [], old).level, 'ok');
+});

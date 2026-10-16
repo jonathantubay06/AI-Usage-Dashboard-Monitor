@@ -13,7 +13,9 @@ export function sanitize(snap, includeTitles) {
     .sort((a, b) => b.last - a.last)
     .slice(0, MAX_SESSIONS)
     .map((s) => (includeTitles ? s : { ...s, title: `Session ${String(s.id).slice(0, 6)}`, project: '' }));
-  return { ...snap, sessions };
+  // A per-session budget names the worst session; hide its title the same way as the session list.
+  const alerts = (snap.alerts || []).map((a) => (a.top && !includeTitles ? { ...a, top: { ...a.top, title: `Session ${String(a.top.id).slice(0, 6)}` } } : a));
+  return { ...snap, sessions, alerts };
 }
 
 // Budgets as the phone may see them: no webhook URLs.

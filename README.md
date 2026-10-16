@@ -50,6 +50,7 @@ Open the Settings tab. Every page section explains itself; in short:
 
 - **Sources.** On first run the app adds every tool it finds in its default location. Each source can be switched off, renamed, pointed at another folder or URL, tested, or removed, and has a "How to set up" guide. Use "Add a source" for LM Studio, a llama.cpp or vLLM server, Ollama on another machine, or another monitor.
 - **Budget alerts.** Add as many rules as you like: any app or model, today / this week / this month, in dollars or tokens, with a warning percentage. Alerts show on the dashboard, as browser notifications, and optionally as a webhook (ntfy.sh phone push, Slack, Discord or plain JSON). Each rule fires once per period and level.
+- **Watch each session.** Tick this on a budget to get a warning when any single chat or session (active in the last 24 hours) passes the limit, which catches a runaway chat early. Webhook texts for these never include the chat title.
 - **Access from other devices.** See below.
 
 API keys and webhook URLs are stored only in `data/config.json` on the computer running the monitor and are never sent back to the browser.

@@ -60,6 +60,7 @@ function alertFrom(b, prev = {}) {
   if (b.warnAt != null) a.warnAt = Math.min(100, Math.max(1, Number(b.warnAt) || 80));
   if (b.browser != null) a.browser = b.browser === true || b.browser === 'on' || b.browser === 'true';
   if (typeof b.enabled === 'boolean') a.enabled = b.enabled;
+  if (b.perSession != null) a.perSession = b.perSession === true || b.perSession === 'on' || b.perSession === 'true';
   if (WEBHOOK_FORMATS[b.webhookFormat]) a.webhookFormat = b.webhookFormat;
   if (b.webhook != null && b.webhook !== '••••••') {
     const w = String(b.webhook).trim();
@@ -105,7 +106,7 @@ function data() {
     snap.sessions.push(...r.sessions.map((d) => ({ ...d, app: tag(d.app), key: `${cfg.id}:${d.key}` })));
     for (const [k, v] of Object.entries(r.limits || {})) snap.limits[tag(k)] = v;
   }
-  snap.alerts = config.alerts.filter((a) => a.enabled !== false).map((a) => ({ ...evaluate(a, snap.daily), browser: a.browser }));
+  snap.alerts = config.alerts.filter((a) => a.enabled !== false).map((a) => ({ ...evaluate(a, snap.daily, snap.sessions), browser: a.browser }));
   return snap;
 }
 // Budget changes made on the phone; webhooks can only be set here on the PC.
@@ -130,7 +131,7 @@ setInterval(() => cloud.push(), 5000);
 setInterval(() => cloud.pull(), 5000);
 const publicCloud = () => ({ ...config.cloud, pushToken: config.cloud.pushToken ? '••••••' : '', last: cloud.status() });
 const runAlerts = createAlertRunner(DATA);
-setInterval(() => runAlerts(config.alerts, data().daily).catch((e) => console.warn(`[alerts] ${e.message}`)), 30000);
+setInterval(() => runAlerts(config.alerts, data().daily, data().sessions).catch((e) => console.warn(`[alerts] ${e.message}`)), 30000);
 
 async function live() {
   const out = [];
@@ -233,7 +234,7 @@ const server = createServer(async (req, res) => {
         if (i < 0) return send(res, 404, { error: 'Not found' });
         const a = config.alerts[i];
         if (am[2]) {
-          const st = evaluate(a, data().daily);
+          const st = evaluate(a, data().daily, data().sessions);
           return send(res, 200, a.webhook ? await sendWebhook(a, `Test alert from AI Token Monitor. ${message(a, { ...st, level: 'test' })}`) : { ok: true, note: 'No webhook set; browser alerts show on the dashboard.' });
         }
         if (req.method === 'DELETE') { config.alerts.splice(i, 1); await saveConfig(); return send(res, 200, { ok: true }); }
