@@ -33,7 +33,7 @@ then open `dist-demo/index.html` through any static server (for example `npx ser
 Needs Node.js 22.5 or newer. The monitor itself needs no packages; `npm install` is only for the optional cloud mirror.
 
 ```bash
-git clone <this-repo-url> ai-token-monitor
+git clone https://github.com/jonathantubay06/AI-Usage-Dashboard-Monitor.git ai-token-monitor
 cd ai-token-monitor
 npm start
 ```
