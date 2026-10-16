@@ -1,6 +1,6 @@
 # Starts AI Token Monitor hidden (if not already running) and opens it in the browser.
-# Usage: powershell -File scripts\start.ps1 [-Lan]
-param([switch]$Lan)
+# Usage: powershell -File scripts\start.ps1 [-Lan] [-NoBrowser]   (-NoBrowser is used by the logon task)
+param([switch]$Lan, [switch]$NoBrowser)
 $root = Split-Path $PSScriptRoot -Parent
 $port = 7788
 $up = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue
@@ -15,4 +15,4 @@ if (-not $up) {
         if (Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue) { break }
     }
 }
-Start-Process "http://127.0.0.1:$port"
+if (-not $NoBrowser) { Start-Process "http://127.0.0.1:$port" }

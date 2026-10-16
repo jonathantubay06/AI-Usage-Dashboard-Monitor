@@ -56,7 +56,7 @@ export function create(cfg, store) {
   }
 
   return {
-    async start() { poll(); timer = setInterval(poll, 10000); },
+    async start() { poll(); timer = setInterval(poll, 5000); },
     stop() { clearInterval(timer); },
   };
 }

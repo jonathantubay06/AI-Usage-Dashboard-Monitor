@@ -109,7 +109,7 @@ function data() {
   return snap;
 }
 const cloud = createCloudPusher({ getConfig: () => config.cloud, getData: data, getLive: live, getRates });
-setInterval(() => cloud.push(), 60000);
+setInterval(() => cloud.push(), 10000); // pushes only when usage changed, plus a 5-minute heartbeat
 const publicCloud = () => ({ ...config.cloud, pushToken: config.cloud.pushToken ? '••••••' : '', last: cloud.status() });
 const runAlerts = createAlertRunner(DATA);
 setInterval(() => runAlerts(config.alerts, data().daily).catch((e) => console.warn(`[alerts] ${e.message}`)), 30000);

@@ -1,6 +1,6 @@
 # Cloud mirror (optional)
 
-Your own read-only copy of the dashboard on a free Netlify site, so you can check usage from a phone anywhere. Your computer pushes a trimmed snapshot every minute; the site stores only the latest one (Netlify Blobs) and shows it after you enter a view token.
+Your own read-only copy of the dashboard on a free Netlify site, so you can check usage from a phone anywhere. Your computer pushes a trimmed snapshot within about 10 seconds of any change; the site stores only the latest one (Netlify Blobs) and shows it after you enter a view token.
 
 What is sent: totals per app, model and day, the last 30 days of sessions (titles and project folders replaced by "Session ab12cd" unless you tick "Include session titles"), live server status, plan limits and exchange rates. Your logs, source paths, API keys and webhooks never leave your computer.
 

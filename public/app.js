@@ -356,7 +356,7 @@ function settingsView() {
 }
 function cloudCard(cl) {
   return `<section class="card"><h2>Cloud mirror <small>check usage from anywhere</small></h2>
-    <p class="note">Sends a copy of this dashboard to your own free Netlify site every minute, so your phone can open it without Tailscale or being on the same Wi-Fi. The cloud copy is read-only and protected by its own view token. Set up the site once with the steps in <code>cloud/README.md</code>.</p>
+    <p class="note">Sends a copy of this dashboard to your own free Netlify site within about 10 seconds of any change, so your phone can open it without Tailscale or being on the same Wi-Fi. The cloud copy is read-only and protected by its own view token. Set up the site once with the steps in <code>cloud/README.md</code>.</p>
     <form class="form" id="cloud-form">
       <label>Your cloud site address<input type="text" name="url" value="${esc(cl.url)}" placeholder="https://my-ai-monitor.netlify.app" autocomplete="off"></label>
       <label>Push token (ATM_PUSH_TOKEN on the site)<input type="password" name="pushToken" value="${esc(cl.pushToken)}" autocomplete="off"></label>
@@ -550,7 +550,10 @@ function connect() {
       $('#pulse').classList.toggle('on', !!d?.pushedAt && Date.now() - d.pushedAt < 3 * 60e3);
       state.live = (await api('/api/live')) || state.live; if (state.tab === 'live') render();
     };
-    tick(); setInterval(tick, 30000);
+    // Poll every 15 s while the page is on screen; pause in the background (saves phone battery and function calls).
+    tick();
+    setInterval(() => { if (document.visibilityState === 'visible') tick(); }, 15000);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') tick(); });
     return;
   }
   if (DEMO) { // a new fake call every few seconds so the live parts move
