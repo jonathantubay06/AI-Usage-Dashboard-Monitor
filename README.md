@@ -10,7 +10,6 @@ A local dashboard that shows what your AI tools use and roughly what it costs, u
 |---|---|---|
 | Claude Code | `~/.claude/projects/**/*.jsonl` | tokens, est. cost, models, sessions with titles |
 | Codex (CLI and app) | `~/.codex/sessions/**/*.jsonl` | tokens, est. cost, models, sessions, 5-hour and weekly plan limit % |
-| opencode | `~/.local/share/opencode/opencode.db` (read-only) | tokens, opencode's own cost, models, sessions |
 | Ollama | `http://127.0.0.1:11434/api/ps` | which models are loaded and their VRAM |
 | OpenAI-compatible server (LM Studio, llama.cpp, vLLM, SGLang, LiteLLM and others) | `/v1/models` and Prometheus `/metrics` | up/down, loaded models, prefill and decode tok/s, running and queued requests, KV cache, and token totals when `/metrics` is exposed |
 | GPU | Windows performance counters, or `nvidia-smi` elsewhere | utilisation and VRAM (only sampled while a dashboard is open) |

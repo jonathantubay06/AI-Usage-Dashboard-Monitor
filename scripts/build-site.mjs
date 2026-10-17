@@ -7,7 +7,6 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as claude from '../src/sources/claude-code.js';
 import * as codex from '../src/sources/codex.js';
-import * as opencode from '../src/sources/opencode.js';
 import { ollama, openaiCompatible, gpu, remote } from '../src/sources/live.js';
 import { PERIODS, WEBHOOK_FORMATS } from '../src/alerts.js';
 import { fetchRates } from '../src/currency.js';
@@ -29,7 +28,7 @@ if (CLOUD) {
   await rm(join(out, 'demo.js'));
   console.log(`Cloud site built in ${out}`);
 } else {
-  const types = [claude, codex, opencode, ollama, openaiCompatible, gpu, remote].map((m) => m.info);
+  const types = [claude, codex, ollama, openaiCompatible, gpu, remote].map((m) => m.info);
   await writeFile(join(out, 'demo-types.json'), JSON.stringify({ types, periods: PERIODS, webhookFormats: WEBHOOK_FORMATS }));
   // Exchange rates are public data: a snapshot at build time keeps the demo free of live calls.
   const rates = await fetchRates().catch((e) => { console.warn(`Rates unavailable (${e.message}); demo shows USD only`); return { base: 'USD', rates: { USD: 1 }, updated: 0 }; });

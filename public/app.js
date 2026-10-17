@@ -347,7 +347,7 @@ function settingsView() {
   ${c.cloud ? cloudCard(c.cloud) : ''}
 
   <section class="card"><h2>About the numbers</h2>
-    <p class="note">Costs are API-equivalent estimates from the public LiteLLM price list, refreshed daily (the same source ccusage uses). On a subscription plan they show what the usage would cost on the API, not your bill. opencode reports its own cost. Local models count as $0. Rows marked "—" are models with no published price.</p>
+    <p class="note">Costs are API-equivalent estimates from the public LiteLLM price list, refreshed daily (the same source ccusage uses). On a subscription plan they show what the usage would cost on the API, not your bill. Local models count as $0. Rows marked "—" are models with no published price.</p>
   </section>`;
 }
 function budgetRules(c, apps, models) {

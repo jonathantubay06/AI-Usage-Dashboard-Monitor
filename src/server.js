@@ -14,7 +14,6 @@ import { loadRates, getRates } from './currency.js';
 import { createCloudPusher } from './cloud.js';
 import * as claude from './sources/claude-code.js';
 import * as codex from './sources/codex.js';
-import * as opencode from './sources/opencode.js';
 import { ollama, openaiCompatible, gpu, remote } from './sources/live.js';
 import { createAlertRunner, evaluate, message, sendWebhook, PERIODS, WEBHOOK_FORMATS } from './alerts.js';
 
@@ -25,7 +24,7 @@ const args = process.argv.slice(2);
 const LAN = args.includes('--lan');
 const PORT = Number(process.env.PORT || args[args.indexOf('--port') + 1] || 7788) || 7788;
 
-const TYPES = Object.fromEntries([claude, codex, opencode, ollama, openaiCompatible, gpu, remote]
+const TYPES = Object.fromEntries([claude, codex, ollama, openaiCompatible, gpu, remote]
   .map((m) => [m.info.type, m]));
 
 // ---------- config ----------
@@ -36,7 +35,7 @@ try { config = JSON.parse(await readFile(CONFIG_FILE, 'utf8')); } catch { config
 if (!config) {
   // First run: add every source whose default location exists on this machine.
   const sources = [];
-  for (const t of ['claude-code', 'codex', 'opencode']) {
+  for (const t of ['claude-code', 'codex']) {
     const def = TYPES[t].info.fields[0].default;
     if (existsSync(expandHome(def))) sources.push({ id: randomUUID(), type: t, name: TYPES[t].info.label, enabled: true, path: def });
   }

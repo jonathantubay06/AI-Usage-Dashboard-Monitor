@@ -11,7 +11,6 @@ const PRICES = { // USD per million tokens: input, output, cache read, cache wri
 const APPS = {
   'Claude Code': ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-haiku-5-5'],
   Codex: ['gpt-6-luna'],
-  opencode: ['big-pickle'],
   'LM Studio': ['qwen3.5-9b'],
 };
 const TITLES = ['Refactor auth middleware', 'Fix flaky checkout test', 'Landing page redesign', 'Write onboarding docs', 'Migrate to Postgres 17',
@@ -27,7 +26,7 @@ function call(app, model, ts, session) {
     cacheRead: big ? Math.round(30000 + rnd() * 160000) : app === 'Codex' ? Math.round(rnd() * 40000) : 0,
     cacheWrite: big ? Math.round(rnd() * 9000) : 0, reasoning: 0,
   };
-  if (app === 'LM Studio' || app === 'opencode') t.in = Math.round(1500 + rnd() * 9000);
+  if (app === 'LM Studio') t.in = Math.round(1500 + rnd() * 9000);
   return { ts, app, model, session, ...t, cost: cost(model, t) };
 }
 
@@ -120,7 +119,6 @@ export function evaluate(rule, daily, sessions = []) {
 export const demoSources = [
   { id: 'd1', type: 'claude-code', name: 'Claude Code', enabled: true, path: '~/.claude/projects' },
   { id: 'd2', type: 'codex', name: 'Codex', enabled: true, path: '~/.codex/sessions' },
-  { id: 'd3', type: 'opencode', name: 'opencode', enabled: true, path: '~/.local/share/opencode/opencode.db' },
   { id: 'd4', type: 'openai-compatible', name: 'LM Studio', enabled: true, url: 'http://127.0.0.1:1234' },
   { id: 'd5', type: 'ollama', name: 'Ollama', enabled: true, url: 'http://127.0.0.1:11434' },
   { id: 'd6', type: 'gpu', name: 'GPU', enabled: true },

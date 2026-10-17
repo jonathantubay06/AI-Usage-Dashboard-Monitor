@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
-  "description": "Local, real-time token and cost tracker for Claude Code, Codex, opencode and local LLMs.",
+  "description": "Local, real-time token and cost tracker for Claude Code, Codex and local LLMs.",
   "type": "module",
   "engines": {
     "node": ">=22.5"
